@@ -4,14 +4,22 @@
     "name": "Cyprien Hallé",
     "url": "https://github.com/cyphalle"
   },
+  "metadata": {
+    "description": "Claude Code plugins by Cyprien Hallé: agent guardrails and CPTO skills."
+  },
   "plugins": [
     {
       "name": "agent-guardrails",
       "source": "./",
       "description": "Gate risky tool calls on whether a human is watching: tiers, scope windows, a hashed audit log, and a PR guard that repairs after creation."
+    },
+    {
+      "name": "cpto-skills",
+      "source": {
+        "source": "github",
+        "repo": "cyphalle/cpto-skills"
+      },
+      "description": "Twelve skills for running product and engineering with agents: spec, gate, open-pr, review-pr, fix-review, worktrees, handoff, critique, headless jobs, writing doctrine."
     }
-  ],
-  "metadata": {
-    "description": "Claude Code plugins by Cyprien Hallé: agent guardrails and CPTO skills."
-  }
+  ]
 }
