@@ -1,0 +1,36 @@
+{
+  "description": "git and gh. Patterns are POSIX ERE (no \\s, use [[:space:]]). Each rule is matched against ONE command of the line, see hooks/lib/tier-lookup.sh.",
+  "rules": [
+    {
+      "match": { "tool": "Bash", "command_regex": "^git[[:space:]]+push.*(--force|--force-with-lease|[[:space:]]-f([[:space:]]|$))" },
+      "tier": 3,
+      "scope": "gh-force"
+    },
+    {
+      "_comment": "Push to main. The token must follow a separator ([[:space:]/:]) so that 'origin main', 'HEAD:main' and 'origin/main' fire, and branch names that end in 'main' (update-domain) do not. A bare `git push` while on main is NOT caught: protect main on the server too.",
+      "match": { "tool": "Bash", "command_regex": "^git[[:space:]]+push[[:space:]]+.*[[:space:]/:]main([[:space:]]|$)" },
+      "tier": 3,
+      "scope": "gh-merge-main"
+    },
+    {
+      "match": { "tool": "Bash", "command_regex": "^git[[:space:]]+branch[[:space:]]+-D" },
+      "tier": 3,
+      "scope": "git-branch-delete"
+    },
+    {
+      "match": { "tool": "Bash", "command_regex": "^gh[[:space:]]+pr[[:space:]]+merge.*(--admin|main|master)" },
+      "tier": 3,
+      "scope": "gh-merge-main"
+    },
+    {
+      "match": { "tool": "Bash", "command_regex": "^gh[[:space:]]+release[[:space:]]+create" },
+      "tier": 3,
+      "scope": "gh-release"
+    },
+    {
+      "match": { "tool": "Bash", "command_regex": "^gh[[:space:]]+(pr[[:space:]]+(merge|review|create)|workflow[[:space:]]+run)" },
+      "tier": 2,
+      "scope": "gh-write"
+    }
+  ]
+}

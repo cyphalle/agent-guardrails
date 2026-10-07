@@ -1,0 +1,25 @@
+{
+  "description": "Outbound messages. A draft is free, a send to the outside is tier 3 and external, an internal team message is audited. Match the tool names of the MCP servers you actually use.",
+  "rules": [
+    {
+      "match": { "tool_prefix": "mcp__google-workspace__", "suffix": "draft_email" },
+      "tier": 1,
+      "scope": null
+    },
+    {
+      "match": { "tool_prefix": "mcp__google-workspace__", "suffix": "send_email" },
+      "tier": 3,
+      "scope": "gmail-send"
+    },
+    {
+      "match": { "tool_prefix": "mcp__plugin_slack_slack__slack_send_message" },
+      "tier": 2,
+      "scope": "slack-internal-write"
+    },
+    {
+      "match": { "tool": "Bash", "command_regex": "curl.*[[:space:]](-X[[:space:]]*|--request[[:space:]]+)(POST|PUT|PATCH|DELETE).*api\\.(hubspot|attio|notion)\\.com" },
+      "tier": 2,
+      "scope": "bash-external-write"
+    }
+  ]
+}

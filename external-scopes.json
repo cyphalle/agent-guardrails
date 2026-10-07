@@ -1,0 +1,11 @@
+{
+  "_doc": "Tier-3 scopes that need an explicit human yes even in a supervised session: anything that leaves the company or commits a third party, and that no revert catches up with. Other tier-3 scopes stay tier 3 (denied with nobody in front, allow-listed for scheduled jobs) but do not interrupt a watched session. Fail-closed: if this file is missing or unreadable, EVERY tier-3 scope asks.",
+  "external": [
+    "db-write",
+    "gmail-send",
+    "gh-release",
+    "crm-write",
+    "social-post"
+  ],
+  "_why_not_listed": "gh-merge-main, gh-force, git-branch-delete, db-dev. They are reversible or internal. In the setup this comes from, 89 of 103 historical blocks came from the merge-to-main scope alone: blocking it in a watched session taught people to click through. db-write IS listed: a production write has no revert."
+}

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# bin/unlock: open a tier-3 window ahead of time, from a real terminal only.
+set -euo pipefail
+
+source "$(cd "$(dirname "$0")/.." && pwd)/hooks/lib/common.sh"
+
+SCOPE=""
+DURATION="30m"
+
+usage() {
+  cat <<EOF
+Usage: unlock --scope <scope> [--duration <duration>]
+
+  <scope>     A scope from your rules/*.json, or 'all'.
+  <duration>  5m, 30m, 1h, 2h... Capped at 24h. 'all' is capped at 1h, any db-* scope at 30m.
+
+You rarely need this: in a supervised session, the first yes opens the window by itself.
+Use it to open a window before a release or a diagnostic pass.
+EOF
+  exit 1
+}
+
+# An agent has no TTY on stdin. Requiring one keeps this command out of its reach.
+if [[ ! -t 0 ]]; then
+  echo "ERROR: unlock requires an interactive terminal. Run it yourself, not from an agent." >&2
+  exit 2
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --scope)    SCOPE="$2"; shift 2;;
+    --duration) DURATION="$2"; shift 2;;
+    -h|--help)  usage;;
+    *)          echo "Unknown arg: $1" >&2; usage;;
+  esac
+done
+
+[[ -z "$SCOPE" ]] && { echo "ERROR: --scope required" >&2; usage; }
+
+case "$DURATION" in
+  *s) DUR_SEC=${DURATION%s};;
+  *m) DUR_SEC=$(( ${DURATION%m} * 60 ));;
+  *h) DUR_SEC=$(( ${DURATION%h} * 3600 ));;
+  *)  echo "ERROR: bad duration format '$DURATION'" >&2; exit 1;;
+esac
+
+(( DUR_SEC > 86400 )) && DUR_SEC=86400
+if [[ "$SCOPE" == "all" ]] && (( DUR_SEC > 3600 )); then
+  DUR_SEC=3600
+  echo "[unlock] 'all' capped to 1h"
+fi
+if [[ "$SCOPE" == db-* ]] && (( DUR_SEC > 1800 )); then
+  DUR_SEC=1800
+  echo "[unlock] '$SCOPE' capped to 30m"
+fi
+
+NOW=$(date +%s)
+mkdir -p "$(dirname "$GUARD_SENTINEL")"
+jq -n \
+  --arg scope "$SCOPE" \
+  --argjson expires "$(( NOW + DUR_SEC ))" \
+  --argjson created "$NOW" \
+  --arg origin "manual" \
+  '{scope: $scope, expires_at: $expires, created_at: $created, origin: $origin}' \
+  > "$GUARD_SENTINEL"
+
+echo "[unlock] scope=$SCOPE, $(( DUR_SEC / 60 ))m remaining"

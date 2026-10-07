@@ -1,0 +1,35 @@
+{
+  "description": "Database access. The discriminant is the TUNNEL PORT, not the hostname. When your databases live in a private network, a direct call to the cloud hostname hangs: the only path that reaches them is a local tunnel. A first version gated on the hostname alone. It locked the path that does not work and left the one that works ungated: `psql postgres://...@localhost:25432 -c 'UPDATE ...'` reached production with no gate at all. Adapt the two ports (15432 = dev tunnel, 25432 = prod tunnel) to your own setup. A read-only wrapper (here `db-readonly`, which opens every session with SET TRANSACTION READ ONLY) stays tier 2 on any port: a read cannot mutate data.",
+  "rules": [
+    {
+      "_comment": "Read-only wrapper: tier 2 (audited, no unlock) on any port. MUST stay above the port rules.",
+      "match": { "tool": "Bash", "command_regex": "(^|[[:space:]/])db-readonly([[:space:]]|$)" },
+      "tier": 2,
+      "scope": "db-read"
+    },
+    {
+      "_comment": "PROD tunnel. Two shapes, because the port can sit on either side of the binary: a database client IN COMMAND POSITION with the port in its arguments, or an env assignment that carries the port into any command (DATABASE_URL=postgres://...:25432 cargo run). No SQL-verb parsing: `-c 'select 1; UPDATE ...'` splits across segments and a verb regex would only see the harmless half. Command position matters: keyed on the bare port number, this rule once fired on its own test file being written. A doc line that opens with `psql ... -p 25432` still trips it. That is the fail-closed side of the trade, and the read path is free.",
+      "match": { "tool": "Bash", "command_regex": "((^|[;&|(){}])[[:space:]]*(sudo[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*(psql|pg_dump|pg_restore|pgcli|sqlx|dbmate|diesel)[[:space:]].*25432|(^|[;&|(){}])[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*25432)" },
+      "tier": 3,
+      "scope": "db-write"
+    },
+    {
+      "_comment": "DEV tunnel, same two shapes. A shared team database: tier 3, so it is denied headless, but internal, so it passes silently with a human in front.",
+      "match": { "tool": "Bash", "command_regex": "((^|[;&|(){}])[[:space:]]*(sudo[[:space:]]+)?([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*(psql|pg_dump|pg_restore|pgcli|sqlx|dbmate|diesel)[[:space:]].*15432|(^|[;&|(){}])[[:space:]]*[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*15432)" },
+      "tier": 3,
+      "scope": "db-dev"
+    },
+    {
+      "_comment": "Anti-bypass: a client aimed straight at a cloud database host. Unreachable from a private network today, but the rule costs nothing and covers a future bastion.",
+      "match": { "tool": "Bash", "command_regex": "(^|[[:space:]])(psql|pg_dump|pg_restore|pgcli)[[:space:]].*(-h|--host)[[:space:]=]+[^[:space:]]*\\.amazonaws\\.com" },
+      "tier": 3,
+      "scope": "db-write"
+    },
+    {
+      "_comment": "Anti-bypass: a postgres:// URL that points at a cloud host. An earlier version used a PCRE lookahead ((?!localhost)). bash [[ =~ ]] is POSIX ERE, so that pattern never compiled and the rule never fired once.",
+      "match": { "tool": "Bash", "command_regex": "postgres(ql)?://[^[:space:]]*@[^[:space:]]*amazonaws\\.com" },
+      "tier": 3,
+      "scope": "db-write"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# bin/audit-tail: follow today's audit log.
+set -euo pipefail
+source "$(cd "$(dirname "$0")/.." && pwd)/hooks/lib/common.sh"
+LOG="$GUARD_AUDIT_DIR/$(date -u +%Y-%m-%d).jsonl"
+[[ -f "$LOG" ]] || { echo "No audit log for today yet."; exit 0; }
+tail -f "$LOG" | jq -c '{ts, tool, tier, scope, unlock_active}'
