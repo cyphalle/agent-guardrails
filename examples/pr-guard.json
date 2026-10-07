@@ -1,0 +1,11 @@
+{
+  "_doc": "Copy to pr-guard.json at the repo root (or point CLAUDE_GUARD_PR_CONFIG at it). The first rule whose prefix matches a changed file adds its reviewer. Repos in no_reviewer only need an assignee: a review request where nobody else works is a notification with no reader.",
+  "assignee": "your-github-login",
+  "reviewers": [
+    { "prefix": "backend/", "reviewer": "backend-owner-login" },
+    { "prefix": "migrations/", "reviewer": "backend-owner-login" },
+    { "prefix": "frontend/", "reviewer": "frontend-owner-login" },
+    { "prefix": "infra/", "reviewer": "frontend-owner-login" }
+  ],
+  "no_reviewer": ["your-github-login/dotfiles"]
+}

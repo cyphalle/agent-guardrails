@@ -1,0 +1,5 @@
+{
+  "_doc": "Copy to scheduled-jobs.json at the repo root. Each key is the value of CLAUDE_GUARD_SCHEDULED_JOB set by the launchd plist or cron line of a headless job. A job gets the tier-3 scopes listed here and nothing else. A missing key or scope is a deny.",
+  "daily-briefing": { "scopes": [] },
+  "weekly-release-notes": { "scopes": ["gh-release"] }
+}
