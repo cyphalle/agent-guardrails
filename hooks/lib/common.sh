@@ -2,9 +2,11 @@
 # hooks/lib/common.sh: paths shared by the gate, the audit and the unlock script.
 
 GUARD_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# User config lives outside the repo, so a plugin update never overwrites it.
+GUARD_CONFIG_DIR="${CLAUDE_GUARD_CONFIG_DIR:-$HOME/.claude/guardrails}"
 GUARD_SENTINEL="${CLAUDE_GUARD_SENTINEL:-$HOME/.claude/guardrails-unlock}"
 GUARD_AUDIT_DIR="${CLAUDE_GUARD_AUDIT_DIR:-$HOME/.claude/guardrails-audit}"
-GUARD_SCHEDULED_JOBS="${CLAUDE_GUARD_SCHEDULED_JOBS:-$GUARD_ROOT/scheduled-jobs.json}"
+GUARD_SCHEDULED_JOBS="${CLAUDE_GUARD_SCHEDULED_JOBS:-$GUARD_CONFIG_DIR/scheduled-jobs.json}"
 
 # True when the sentinel holds an unexpired window on this scope, or on 'all'.
 window_covers() {

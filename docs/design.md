@@ -14,12 +14,14 @@ The current version asks a different question: can anyone see this call? With a 
 internal actions pass and the audit keeps them. External actions ask once, then a window covers
 the series. With nobody in front, everything tier 3 is denied, except what a scheduled job lists.
 
-## 2. Bypass mode turns `ask` into `allow`
+## 2. In bypass mode, the gate does not rely on `ask`
 
-A test under `--dangerously-skip-permissions` showed a tier-3 call that went through with no
-prompt and no window. The harness treats `ask` as an allow in that mode. The gate now shows its
-own dialog in that case, writes the answer to the audit log, and returns `allow` or `deny`
-itself. A timeout or a missing screen is a deny.
+In one interactive session under `--dangerously-skip-permissions`, on an earlier Claude Code
+version, a tier-3 call went through with no prompt and no window. A retest on 2.1.292, headless
+(`claude -p`), went the other way: the `ask` blocked the call. The behaviour of `ask` in bypass
+mode is therefore not something to build on. In that mode the gate shows its own dialog, writes
+the answer to the audit log, and returns `allow` or `deny` itself. A timeout or a missing screen
+is a deny.
 
 ## 3. Post-hooks repair, pre-hooks block
 

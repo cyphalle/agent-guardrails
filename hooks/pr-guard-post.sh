@@ -9,7 +9,7 @@
 set -u
 
 source "$(dirname "$0")/lib/common.sh"
-CONFIG="${CLAUDE_GUARD_PR_CONFIG:-$GUARD_ROOT/pr-guard.json}"
+CONFIG="${CLAUDE_GUARD_PR_CONFIG:-$GUARD_CONFIG_DIR/pr-guard.json}"
 [ -f "$CONFIG" ] || exit 0
 
 payload=$(cat)

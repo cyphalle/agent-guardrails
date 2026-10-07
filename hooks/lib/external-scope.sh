@@ -9,7 +9,10 @@
 
 is_external_scope() {
   local scope="$1" f="${2:-}"
-  [[ -z "$f" ]] && f="${CLAUDE_GUARD_EXTERNAL_SCOPES:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/external-scopes.json}"
+  if [[ -z "$f" ]]; then
+    f="${CLAUDE_GUARD_EXTERNAL_SCOPES:-${CLAUDE_GUARD_CONFIG_DIR:-$HOME/.claude/guardrails}/external-scopes.json}"
+    [[ -n "${CLAUDE_GUARD_EXTERNAL_SCOPES:-}" || -f "$f" ]] || f="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/external-scopes.json"
+  fi
   [[ -f "$f" ]] || return 0
   jq -e '.external | type == "array"' "$f" >/dev/null 2>&1 || return 0
   jq -e --arg s "$scope" '.external | index($s)' "$f" >/dev/null 2>&1

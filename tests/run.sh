@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
+export CLAUDE_GUARD_CONFIG_DIR="$TMP/config"
 export CLAUDE_GUARD_SENTINEL="$TMP/unlock"
 export CLAUDE_GUARD_AUDIT_DIR="$TMP/audit"
 export CLAUDE_GUARD_SCHEDULED_JOBS="$TMP/scheduled-jobs.json"

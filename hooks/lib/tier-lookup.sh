@@ -3,7 +3,16 @@
 set -euo pipefail
 
 GUARD_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-RULES_DIR="${CLAUDE_GUARD_RULES_DIR:-$GUARD_ROOT/rules}"
+CONFIG_DIR="${CLAUDE_GUARD_CONFIG_DIR:-$HOME/.claude/guardrails}"
+# Your own rules replace the bundled ones as a whole: a partial merge would make the order of
+# first-match-wins hard to read.
+if [[ -n "${CLAUDE_GUARD_RULES_DIR:-}" ]]; then
+  RULES_DIR="$CLAUDE_GUARD_RULES_DIR"
+elif [[ -d "$CONFIG_DIR/rules" ]]; then
+  RULES_DIR="$CONFIG_DIR/rules"
+else
+  RULES_DIR="$GUARD_ROOT/rules"
+fi
 
 INPUT=$(cat)
 TOOL=$(echo "$INPUT" | jq -r '.tool_name // empty')

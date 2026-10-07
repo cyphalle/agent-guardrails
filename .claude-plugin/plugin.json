@@ -1,0 +1,8 @@
+{
+  "name": "agent-guardrails",
+  "description": "Gate risky tool calls on whether a human is watching: tiers, scope windows, a hashed audit log, and a PR guard that repairs after creation.",
+  "version": "0.2.0",
+  "author": { "name": "Cyprien Hallé", "url": "https://github.com/cyphalle" },
+  "homepage": "https://github.com/cyphalle/agent-guardrails",
+  "license": "MIT"
+}

@@ -1,4 +1,4 @@
-# claude-guardrails
+# agent-guardrails
 
 Hooks for [Claude Code](https://docs.claude.com/en/docs/claude-code) that let agents run with
 wide autonomy while a few actions stay locked. The lock depends on **whether a human is in
@@ -51,9 +51,11 @@ The short version:
   what is external, or what runs with nobody in front, keeps the prompts rare enough to be read.
 - **A rule matches one command.** Rules run on each segment of a shell line. Unsplit, the `.*`
   of the force-push rule found a `-f` that belonged to a `pgrep` three commands later.
-- **Bypass mode swallows `ask`.** Under `--dangerously-skip-permissions`, an `ask` decision
-  acts as an allow. The gate then shows a native dialog and decides by itself (macOS). With no
-  dialog available, it denies.
+- **The gate decides by itself in bypass mode.** In one interactive session under
+  `--dangerously-skip-permissions`, on an earlier Claude Code version, an `ask` went through
+  with no prompt. A headless retest on 2.1.292 blocked it instead. The gate does not depend on
+  either behaviour: in bypass mode it shows its own dialog (macOS) and returns `allow` or
+  `deny`. With no dialog available, it denies.
 - **The gate has to be cheap.** It runs twice per tool call. One `jq` pass for all rules took a
   lookup from 13 s to milliseconds. A gate nobody can afford is a gate that gets removed.
 
@@ -61,38 +63,55 @@ The short version:
 
 Requirements: `bash` (3.2 is fine), `jq`, `shasum`, and `gh` for the PR guard.
 
-```bash
-git clone https://github.com/cyphalle/claude-guardrails ~/claude-guardrails
-cp ~/claude-guardrails/examples/pr-guard.json ~/claude-guardrails/pr-guard.json         # then edit
-cp ~/claude-guardrails/examples/scheduled-jobs.json ~/claude-guardrails/scheduled-jobs.json
+As a Claude Code plugin:
+
+```
+/plugin marketplace add cyphalle/agent-guardrails
+/plugin install agent-guardrails@cyphalle
 ```
 
-Merge [`examples/settings.json`](examples/settings.json) into `~/.claude/settings.json`.
-Then adapt the rules:
+The bundled rules apply at once. Read [`rules/`](rules/) before you install: they gate pushes
+to `main`, force pushes, branch deletion, releases, outbound email and two database tunnel
+ports.
 
-- `rules/*.json` are read in file-name order, and the first match wins. Patterns are POSIX ERE:
-  write `[[:space:]]`, never `\s`.
-- `external-scopes.json` lists the scopes that ask even with a human in front.
+Your configuration lives in `~/.claude/guardrails/`, outside the plugin, so an update never
+overwrites it:
+
+```bash
+mkdir -p ~/.claude/guardrails
+cp examples/pr-guard.json ~/.claude/guardrails/pr-guard.json          # enables the PR guard
+cp examples/scheduled-jobs.json ~/.claude/guardrails/scheduled-jobs.json
+cp -R rules ~/.claude/guardrails/rules                                # to change the rules
+```
+
+- A `rules/` folder there replaces the bundled rules as a whole. Files are read in name order,
+  and the first match wins. Patterns are POSIX ERE: write `[[:space:]]`, never `\s`.
+- An `external-scopes.json` there replaces the bundled list of scopes that ask even with a
+  human in front.
 - `rules/10-database.json` assumes a dev tunnel on `15432` and a prod tunnel on `25432`.
   Change the ports to yours.
+
+Without the plugin system, clone the repo and merge
+[`examples/settings.json`](examples/settings.json) into `~/.claude/settings.json`.
 
 Open a window ahead of time, from your own terminal:
 
 ```bash
-~/claude-guardrails/bin/unlock --scope gh-release --duration 1h
-~/claude-guardrails/bin/audit-tail
+bin/unlock --scope gh-release --duration 1h
+bin/audit-tail
 ```
 
 ## Configuration
 
 | Variable | Default |
 |---|---|
-| `CLAUDE_GUARD_RULES_DIR` | `rules/` |
+| `CLAUDE_GUARD_CONFIG_DIR` | `~/.claude/guardrails` |
+| `CLAUDE_GUARD_RULES_DIR` | `<config>/rules/`, else the bundled `rules/` |
 | `CLAUDE_GUARD_SENTINEL` | `~/.claude/guardrails-unlock` |
 | `CLAUDE_GUARD_AUDIT_DIR` | `~/.claude/guardrails-audit` |
-| `CLAUDE_GUARD_SCHEDULED_JOBS` | `scheduled-jobs.json` |
-| `CLAUDE_GUARD_EXTERNAL_SCOPES` | `external-scopes.json` |
-| `CLAUDE_GUARD_PR_CONFIG` | `pr-guard.json` |
+| `CLAUDE_GUARD_SCHEDULED_JOBS` | `<config>/scheduled-jobs.json` |
+| `CLAUDE_GUARD_EXTERNAL_SCOPES` | `<config>/external-scopes.json`, else the bundled one |
+| `CLAUDE_GUARD_PR_CONFIG` | `<config>/pr-guard.json` (no file: the PR guard stays off) |
 | `CLAUDE_GUARD_SCHEDULED_JOB` | set by your scheduler, never by hand |
 
 ## Tests

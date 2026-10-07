@@ -82,7 +82,7 @@ if supervised; then
 on run argv
   set s to item 1 of argv
   set d to item 2 of argv
-  set r to display dialog "External, irreversible action." & return & return & "scope: " & s & return & return & d with title "claude-guardrails" buttons {"Deny", "Allow"} default button "Allow" giving up after 45
+  set r to display dialog "External, irreversible action." & return & return & "scope: " & s & return & return & d with title "agent-guardrails" buttons {"Deny", "Allow"} default button "Allow" giving up after 45
   if gave up of r then return "TIMEOUT"
   return button returned of r
 end run

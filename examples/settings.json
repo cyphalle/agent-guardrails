@@ -1,11 +1,11 @@
 {
   "hooks": {
     "PreToolUse": [
-      { "matcher": "*", "hooks": [ { "type": "command", "command": "$HOME/claude-guardrails/hooks/pre-tool-gate.sh" } ] }
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "$HOME/agent-guardrails/hooks/pre-tool-gate.sh" } ] }
     ],
     "PostToolUse": [
-      { "matcher": "*", "hooks": [ { "type": "command", "command": "$HOME/claude-guardrails/hooks/post-tool-audit.sh" } ] },
-      { "matcher": "Bash|mcp__plugin_github_github__create_pull_request", "hooks": [ { "type": "command", "command": "$HOME/claude-guardrails/hooks/pr-guard-post.sh", "timeout": 20 } ] }
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "$HOME/agent-guardrails/hooks/post-tool-audit.sh" } ] },
+      { "matcher": "Bash|mcp__plugin_github_github__create_pull_request", "hooks": [ { "type": "command", "command": "$HOME/agent-guardrails/hooks/pr-guard-post.sh", "timeout": 20 } ] }
     ]
   }
 }
