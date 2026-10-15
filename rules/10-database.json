@@ -1,0 +1,35 @@
+{
+  "description": "Database access, keyed on the port of a local tunnel. When a database sits in a private network and the only working path is a local tunnel on a known port, gating the hostname alone locks the path that cannot work and leaves the one that works open. So the rules look for the tunnel port. Set <DEV_PORT>, <PROD_PORT> and <PROD_HOST> in ~/.claude/guardrails/placeholders.json (see examples/placeholders.json). An unset placeholder matches nothing, so these rules stay inert until you set them. A read-only wrapper (here `db-readonly`, which opens every session with SET TRANSACTION READ ONLY) stays tier 2 on any port: a read cannot mutate data.",
+  "rules": [
+    {
+      "_comment": "Read-only wrapper: tier 2 (audited, no unlock) on any port. MUST stay above the port rules.",
+      "match": { "tool": "Bash", "command_regex": "^db-readonly([[:space:]]|$)" },
+      "tier": 2,
+      "scope": "db-read"
+    },
+    {
+      "_comment": "PROD tunnel, client form: a database client in command position (after normalisation of sudo, env, absolute paths) with the port in its arguments. No SQL-verb parsing: `-c 'select 1; UPDATE ...'` splits across segments and a verb regex would only see the harmless half. A doc line that opens with `psql ... -p <PROD_PORT>` still trips it. That is the fail-closed side of the trade, and the read path is free.",
+      "match": { "tool": "Bash", "command_regex": "^(psql|pg_dump|pg_dumpall|pg_restore|pgcli|sqlx|dbmate|diesel|refinery)[[:space:]].*[^0-9]<PROD_PORT>([^0-9]|$)" },
+      "tier": 3,
+      "scope": "db-write"
+    },
+    {
+      "_comment": "PROD tunnel, environment form: any assignment that carries the port (DATABASE_URL=postgres://...:<PROD_PORT>/app cargo run, export PGPORT=<PROD_PORT>).",
+      "match": { "tool": "Bash", "command_regex": "(^|[[:space:]])[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[^0-9]?<PROD_PORT>([^0-9]|$)" },
+      "tier": 3,
+      "scope": "db-write"
+    },
+    {
+      "_comment": "DEV tunnel, same two forms. A shared team database: tier 3, so it is denied headless, but internal, so it passes silently with a human in front.",
+      "match": { "tool": "Bash", "command_regex": "^(psql|pg_dump|pg_dumpall|pg_restore|pgcli|sqlx|dbmate|diesel|refinery)[[:space:]].*[^0-9]<DEV_PORT>([^0-9]|$)|(^|[[:space:]])[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[^0-9]?<DEV_PORT>([^0-9]|$)" },
+      "tier": 3,
+      "scope": "db-dev"
+    },
+    {
+      "_comment": "Anti-bypass: a client aimed straight at the production host, by flag or by URL. Patterns are POSIX ERE: a PCRE lookahead such as (?!localhost) never compiles in bash, and the guard now reports such a pattern as a misconfiguration.",
+      "match": { "tool": "Bash", "command_regex": "^(psql|pg_dump|pg_dumpall|pg_restore|pgcli)[[:space:]].*(-h|--host)[[:space:]=]+[^[:space:]]*<PROD_HOST>|postgres(ql)?://[^[:space:]]*@[^[:space:]]*<PROD_HOST>" },
+      "tier": 3,
+      "scope": "db-write"
+    }
+  ]
+}

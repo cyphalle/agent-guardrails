@@ -1,0 +1,43 @@
+{
+  "description": "git and gh. Patterns are POSIX ERE (no \\s, use [[:space:]]). Each rule is matched against ONE command of the line, both as written and after normalisation of the command word (sudo, env, command, VAR=, absolute paths, a leading parenthesis, git -C/-c, the body of sh -c), see hooks/lib/tier-lookup.sh.",
+  "rules": [
+    {
+      "_comment": "Destructive push: --force in all its forms, a +refspec, combined short flags that contain f or d (-fu), --mirror, --delete or a :branch refspec.",
+      "match": { "tool": "Bash", "command_regex": "^git[[:space:]]+push([[:space:]].*)?[[:space:]](--force[^[:space:]]*|--mirror|--delete|-[A-Za-z]*[fd][A-Za-z]*|\\+[^[:space:]]+|:[^[:space:]]+)([[:space:]]|$)" },
+      "tier": 3,
+      "scope": "gh-force"
+    },
+    {
+      "_comment": "Push to main or master. The branch must follow a separator ([[:space:]/:+]) so that 'origin main', 'HEAD:main' and 'refs/heads/main' fire, and branch names that end in 'main' (update-domain) do not. A bare `git push` while on main is NOT caught: protect main on the server too.",
+      "match": { "tool": "Bash", "command_regex": "^git[[:space:]]+push[[:space:]]+.*[[:space:]/:+](main|master)([[:space:]]|$)" },
+      "tier": 3,
+      "scope": "gh-merge-main"
+    },
+    {
+      "match": { "tool": "Bash", "command_regex": "^git[[:space:]]+branch[[:space:]]+(.*[[:space:]])?-[A-Za-z]*D" },
+      "tier": 3,
+      "scope": "git-branch-delete"
+    },
+    {
+      "_comment": "Every PR merge, whatever its base branch. The hook does not ask GitHub for the base (no network call in a gate that runs on every tool call), so it cannot tell a merge into main from a merge into a feature branch. Protect main on the server too.",
+      "match": { "tool": "Bash", "command_regex": "^gh[[:space:]]+(pr[[:space:]]+merge|api[[:space:]].*(pulls/[0-9]+/merge|mergePullRequest))" },
+      "tier": 3,
+      "scope": "gh-merge-main"
+    },
+    {
+      "match": { "suffix": "merge_pull_request" },
+      "tier": 3,
+      "scope": "gh-merge-main"
+    },
+    {
+      "match": { "tool": "Bash", "command_regex": "^gh[[:space:]]+release[[:space:]]+create" },
+      "tier": 3,
+      "scope": "gh-release"
+    },
+    {
+      "match": { "tool": "Bash", "command_regex": "^gh[[:space:]]+(pr[[:space:]]+(review|create)|workflow[[:space:]]+run)" },
+      "tier": 2,
+      "scope": "gh-write"
+    }
+  ]
+}

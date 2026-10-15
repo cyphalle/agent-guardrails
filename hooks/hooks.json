@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-gate.sh\"" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/post-tool-audit.sh\"" } ] },
+      { "matcher": "Bash|mcp__plugin_github_github__create_pull_request", "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pr-guard-post.sh\"", "timeout": 20 } ] }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "_doc": "Tier-3 scopes that need an explicit human yes even in a supervised session: anything that reaches people outside your team or commits a third party, and that no revert catches up with. Other tier-3 scopes stay tier 3 (denied with nobody in front, allow-listed for scheduled jobs) but do not interrupt a watched session. Fail-closed: if this file is missing or unreadable, EVERY tier-3 scope asks. The locked scopes guard-config and guard-misconfigured always ask, whatever this file says.",
+  "external": [
+    "db-write",
+    "gmail-send",
+    "gh-release",
+    "crm-write",
+    "social-post"
+  ],
+  "_why_not_listed": "Scopes are split by who an action affects. External actions (email, CRM, payments, production database writes) ask a human every time. Internal actions on your own repositories (gh-merge-main, gh-force, git-branch-delete, and db-dev for a shared dev database) pass in a supervised session and are logged; with nobody in front they are denied. Move a scope into the list above if a revert would not catch it in your setup."
+}

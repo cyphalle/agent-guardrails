@@ -1,0 +1,6 @@
+{
+  "_doc": "Copy to ~/.claude/guardrails/placeholders.json and set your own values. A rule pattern that contains <NAME> gets the value of NAME here. Names are UPPER_CASE; values are letters, digits, dot, dash or underscore (a dot is escaped for you). An unset placeholder matches nothing, so the rule that uses it stays inert.",
+  "DEV_PORT": "5433",
+  "PROD_PORT": "5434",
+  "PROD_HOST": "db.example.com"
+}
